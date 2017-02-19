@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 
+# The below is a slightly modified version of https://github.com/Lujeni/Surcharge
+# Credit for it belongs to them
+
 from collections import defaultdict
 from urlparse import urlparse, urlunparse
 from socket import gethostbyname
