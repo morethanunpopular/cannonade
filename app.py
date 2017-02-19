@@ -1,4 +1,4 @@
-from flask import Flask, request, g
+from flask import Flask, request, g, Response
 import surcharge.core as surcharge
 import json
 import time
@@ -32,7 +32,7 @@ def close_connection(exception):
         db.close()
 
 # Endpoint for accessing the benchmark method
-@app.route('/benchmark_url', methods = ['POST', 'GET'])
+@app.route('/run_benchmark', methods = ['POST', 'GET'])
 def benchmark():
   conn = get_db()
   cur = conn.cursor()
@@ -43,34 +43,33 @@ def benchmark():
     except:
       error = { "message:": "You must pass arguments to the benchmark endpoint as a json document" }
       response = buildResponse({}, error)
-      return json.dumps(response)
+      return Response(json.dumps(response), mimetype='application/json')
 
     try: 
       surcharger = surcharge.Surcharger(**surcharger_args)
     except:
       error = { "message:": "Could not process benchmark with arguments provided" }
       response = buildResponse({}, error)
-      return json.dumps(response)
+      return Response(json.dumps(response), mimetype='application/json')
 
     try:
       surcharger()
     except error as e:
       error = { "message:": e}
       response = buildResponse({}, error)
-      return json.dumps(response)
+      return Response(json.dumps(response), mimetype='application/json')
     
     stats = surcharge.SurchargerStats(surcharger=surcharger)
     stats()
-    print stats.send
     attributes = { "request": surcharger_args, "results": stats.stats, "type": "URL Benchmark Test" }
     response = buildResponse(attributes, {})
     insertString = "insert into benchmarks (result) values ('{0}')".format(json.dumps(response))
     cur.execute(insertString)
     conn.commit()
     response['id'] = cur.lastrowid
-    return json.dumps(response)
+    return Response(json.dumps(response), mimetype='application/json')
   else:
-    return '{"message": "nothing to see here"}'
+    return Response('{"message": "nothing to see here"}', mimetype='application/json')
      
 # Endpoint to fetch past benchmarks
 @app.route('/benchmarks/<id>')
@@ -83,12 +82,12 @@ def fetchBenchmark(id):
     try: 
       response = json.loads(cur.fetchone()[0])
       response['id'] = id     
-      return json.dumps(response)
+      return Response(json.dumps(response), mimetype='application/json')
     except:
-      return '{ "message": "ID not found"}'
+      return Response('{ "message": "ID not found"}', mimetype='application/json')
     
   else:
-    return '{"message": "nothing to see here"}'
+    return Response('{"message": "nothing to see here"}', mimetype='application/json')
 
 if __name__ == '__main__':
     app.run(threaded=True, host="0.0.0.0")
