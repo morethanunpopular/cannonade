@@ -171,7 +171,7 @@ class SurchargerStats(object):
                 'requests_process': 0,
                 'min': 0,
                 'max': 0,
-                'moy': 0,
+                'time_per_request': 0,
                 'RPS': 0,
             }
 
@@ -181,7 +181,7 @@ class SurchargerStats(object):
                     'requests_process': request_process,
                     'min': min(self.result[200]),
                     'max': max(self.result[200]),
-                    'moy': request_process / self.stats['total_success'],
+                    'time_per_request': request_process / self.stats['total_success'],
                     'RPS': self.stats['total_success'] / request_process * self.surcharger.concurrency,
                 })
 
@@ -197,7 +197,7 @@ class SurchargerStats(object):
             Failed requests: {total_failed}
             Faster request: {min:.3f}
             Slower request: {max:.3f}
-            Time per request (only success): {moy:.3f}
+            Time per request (only success): {time_per_request:.3f}
             Request per second: {RPS:.2f}
         '''.format(**self.stats))
 
