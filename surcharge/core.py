@@ -111,7 +111,7 @@ class Surcharger(object):
         url_resolved = gethostbyname(url_netloc[0])
         url_full = url_resolved + ':' + url_netloc[1]
         self._url = urlunparse((scheme, url_full) + (path, params, query, fragment))
-
+        self.hostname = netloc
     @property
     def method(self):
         return u'{}'.format(self._method)
@@ -134,6 +134,7 @@ class Surcharger(object):
         """
         try:
             start = time()
+            self.options['headers'] = { 'Host': self.hostname }
             response = getattr(requests, self.method)(self.url, **self.options)
             status_code = response.status_code
         except Exception as e:

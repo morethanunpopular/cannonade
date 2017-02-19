@@ -34,7 +34,7 @@ def close_connection(exception):
     if db is not None:
         db.close()
 
-# Endpoint for accessing the benchmark method
+# Endpoint for accessing the methods endpoint
 @app.route('/methods', methods = ['POST', 'GET'])
 def methods():
   conn = get_db()
@@ -54,14 +54,15 @@ def methods():
 
         try: 
           surcharger = surcharge.Surcharger(**surcharger_args)
-        except:
-          error = { "message:": "Could not process benchmark with arguments provided" }
+        except Exception as e:
+          print sys.exc_info()[0].message.__str__
+          error = { "message:": "Could not process benchmark with arguments provided", "exception": e }
           response = buildResponse({}, error, '500')
           return Response(json.dumps(response), mimetype='application/json'), 500
 
         try:
           surcharger()
-        except error as e:
+        except Exception as e:
           error = { "message:": e}
           response = buildResponse({}, error, '500')
           return Response(json.dumps(response), mimetype='application/json'), 500
@@ -70,7 +71,7 @@ def methods():
         stats()
         attributes = { "request": surcharger_args, "results": stats.stats, "type": "Remote Method", "method": method }
         response = buildResponse(attributes, {}, '200')
-        insertString = "insert into benchmarks (result) values ('{0}')".format(json.dumps(response))
+        insertString = "insert into benchmarks (result) values ('{0}')".format(json.dumps(attributes))
         cur.execute(insertString)
         conn.commit()
         response['id'] = cur.lastrowid
@@ -96,8 +97,9 @@ def fetchBenchmark(id):
     query = "select result from benchmarks where id = {0}".format(id)
     cur.execute(query)
     try: 
-      response = json.loads(cur.fetchone()[0])
-      response['id'] = id     
+      attributes = json.loads(cur.fetchone()[0])
+      attributes['id'] = id 
+      response = buildResponse(attributes, {}, '200')    
       return Response(json.dumps(response), mimetype='application/json')
     except:
       return Response('{ "message": "ID not found"}', mimetype='application/json'), 404
